@@ -1,0 +1,5 @@
+PyQt5==5.15.9
+python-twain==1.0.4
+sane-py==2.8.3
+Pillow==10.0.0
+pyinstaller==5.13.0
