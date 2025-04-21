@@ -1,0 +1,60 @@
+name: Build Windows Executable
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller PyQt5==5.15.9 python-twain sane-py pillow
+        pip install pywin32  # Required for PyQt5 on Windows
+        
+    - name: List installed packages (debug)
+      run: pip list
+        
+    - name: Build executable with PyInstaller
+      run: |
+        pyinstaller --noconfirm --onefile --windowed --name DocumentScanner ^
+          --add-data "icon.ico;." ^
+          --hidden-import='PyQt5.QtCore' ^
+          --hidden-import='PyQt5.QtGui' ^
+          --hidden-import='PyQt5.QtWidgets' ^
+          --hidden-import='PIL._tkinter_finder' ^
+          --hidden-import='sane' ^
+          --hidden-import='twain' ^
+          scanner_app.py
+        
+    - name: Check build output (debug)
+      run: dir /s /b dist
+      
+    - name: Upload artifact
+      if: success()
+      uses: actions/upload-artifact@v3
+      with:
+        name: DocumentScanner-Windows
+        path: dist/
+        
+    - name: Upload build log
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: Build-Logs
+        path: |
+          build/
+          dist/
+          *.log
